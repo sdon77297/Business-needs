@@ -72,30 +72,17 @@ A production-grade, enterprise Full-Stack web application designed specifically 
 ### 1. Prerequisites
 Ensure Python 3.10+ is installed on your machine.
 
-### 2. Configure Django
-Set `DJANGO_SECRET_KEY` to a unique random value of at least 32 characters before running Django commands.
-
-PowerShell:
-```powershell
-$env:DJANGO_SECRET_KEY = (python -c "import secrets; print(secrets.token_urlsafe(50))")
-```
-
-Linux/macOS:
-```bash
-export DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(50))')"
-```
-
-### 3. Navigate to Project Directory
+### 2. Navigate to Project Directory
 ```bash
 cd "business-profit-management"
 ```
 
-### 4. Install Dependencies
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 5. Run Migrations & Seed Demo Data
+### 4. Run Migrations & Seed Demo Data
 ```bash
 # Run database migrations
 python manage.py migrate
@@ -104,13 +91,13 @@ python manage.py migrate
 python seed_demo.py
 ```
 
-### 6. Run the Automated Test Suite
+### 5. Run the Automated Test Suite
 Verify that all unit and integration tests pass cleanly:
 ```bash
 python manage.py test
 ```
 
-### 7. Start the Development Server
+### 6. Start the Development Server
 ```bash
 python manage.py runserver
 ```

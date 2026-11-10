@@ -72,12 +72,6 @@ To test the **Executive Partner CRM**, visit `/admin/login` or click **"Partner 
 * **Node.js** v18+ (tested on Node v24.14.0)
 * **MongoDB** (running locally on `mongodb://127.0.0.1:27017` or via MongoDB Atlas URI)
 
-### Configure the backend environment
-Create `backend/.env` from the example and replace `JWT_SECRET` with a unique random value of at least 32 characters:
-```bash
-cp backend/.env.example backend/.env
-```
-
 ### 1. Install Dependencies
 From the repository root:
 ```bash
