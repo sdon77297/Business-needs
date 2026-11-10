@@ -35,12 +35,12 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       name: user.name,
     });
 
-    // Set secure HttpOnly cookie
+    // Set secure HttpOnly cookie (sameSite: 'none' required for cross-domain production deployment)
     const cookieOptions = {
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
-      sameSite: (env.NODE_ENV === 'production' ? 'strict' : 'lax') as 'strict' | 'lax',
+      sameSite: (env.NODE_ENV === 'production' ? 'none' : 'lax') as 'none' | 'lax',
     };
 
     res.cookie(env.COOKIE_NAME, token, cookieOptions);

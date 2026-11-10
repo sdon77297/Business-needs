@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// Support production backend domain or local proxy fallback
+const customBase = import.meta.env.VITE_API_BASE_URL;
+const baseURL = customBase
+  ? `${customBase.replace(/\/+$/, '')}/api/v1`
+  : '/api/v1';
+
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL,
   withCredentials: true, // Send HttpOnly cookies with all requests
   headers: {
     'Content-Type': 'application/json',
