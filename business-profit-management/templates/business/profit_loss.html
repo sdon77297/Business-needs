@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load business_tags %}
+{% block title %}Profit & Loss Statement - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold text-dark mb-1">Profit & Loss Financial Statement</h4>
+    <p class="text-muted small mb-0">Audited financial performance for <strong>{{ business.name }}</strong></p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{% url 'business:download_report_pdf' %}{% if start_date_str %}?start_date={{ start_date_str }}&end_date={{ end_date_str }}{% endif %}" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-sm">
+      <i class="fa-solid fa-file-pdf"></i>
+      <span>Export PDF</span>
+    </a>
+    <a href="{% url 'business:download_report_excel' %}{% if start_date_str %}?start_date={{ start_date_str }}&end_date={{ end_date_str }}{% endif %}" class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 shadow-sm">
+      <i class="fa-solid fa-file-excel"></i>
+      <span>Export Excel</span>
+    </a>
+  </div>
+</div>
+
+<!-- Date Preset Selector Strip -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+    <!-- Preset Pills -->
+    <div class="btn-group" role="group">
+      <a href="{% url 'business:profit_loss' %}?preset=all" class="btn btn-sm {% if preset == 'all' %}btn-navy{% else %}btn-light border{% endif %}">
+        All Time
+      </a>
+      <a href="{% url 'business:profit_loss' %}?preset=today" class="btn btn-sm {% if preset == 'today' %}btn-navy{% else %}btn-light border{% endif %}">
+        Today
+      </a>
+      <a href="{% url 'business:profit_loss' %}?preset=this_week" class="btn btn-sm {% if preset == 'this_week' %}btn-navy{% else %}btn-light border{% endif %}">
+        This Week
+      </a>
+      <a href="{% url 'business:profit_loss' %}?preset=this_month" class="btn btn-sm {% if preset == 'this_month' %}btn-navy{% else %}btn-light border{% endif %}">
+        This Month
+      </a>
+      <a href="{% url 'business:profit_loss' %}?preset=this_year" class="btn btn-sm {% if preset == 'this_year' %}btn-navy{% else %}btn-light border{% endif %}">
+        This Year
+      </a>
+    </div>
+
+    <!-- Custom Date Range Form -->
+    <form method="GET" action="{% url 'business:profit_loss' %}" class="d-flex align-items-center gap-2">
+      <input type="hidden" name="preset" value="custom">
+      <span class="small text-muted fw-semibold">Custom:</span>
+      <input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date_str }}" required>
+      <span class="small text-muted">to</span>
+      <input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date_str }}" required>
+      <button type="submit" class="btn btn-sm btn-emerald">Apply</button>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================
+     EXECUTIVE P&L STATEMENT SUMMARY
+     ========================================== -->
+<div class="row g-4 mb-4">
+  <!-- Main P&L Big Result Card -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 {% if summary.is_profit %}bg-profit-light border border-success-subtle{% else %}bg-loss-light border border-danger-subtle{% endif %}">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-uppercase fw-bold small {% if summary.is_profit %}text-profit{% else %}text-loss{% endif %}">
+          {% if summary.is_profit %}<i class="fa-solid fa-circle-check me-1"></i> NET PROFIT GENERATED{% else %}<i class="fa-solid fa-circle-exclamation me-1"></i> NET LOSS INCURRED{% endif %}
+        </span>
+        <span class="badge {% if summary.is_profit %}bg-success{% else %}bg-danger{% endif %} fs-6 px-3 py-1">
+          {{ summary.profit_percentage }}% Profit Margin
+        </span>
+      </div>
+
+      <div class="display-5 fw-bold my-2 {% if summary.is_profit %}text-profit{% else %}text-loss{% endif %}">
+        {% if summary.is_profit %}+{% else %}-{% endif %}{{ user_currency }} {{ summary.net_profit|abs|floatformat:2|intcomma }}
+      </div>
+
+      <p class="small text-muted mb-0">
+        Calculated using: <code>Net Profit = Gross Profit &minus; Operating Expenses</code>
+      </p>
+
+      <hr class="my-3 opacity-25">
+
+      <div class="row text-center g-2">
+        <div class="col-4">
+          <small class="text-muted d-block">Gross Revenue</small>
+          <span class="fw-bold text-dark">{{ user_currency }} {{ summary.total_revenue|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="col-4">
+          <small class="text-muted d-block">Total Cost</small>
+          <span class="fw-bold text-danger">{{ user_currency }} {{ summary.total_cost|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="col-4">
+          <small class="text-muted d-block">Operating Overheads</small>
+          <span class="fw-bold text-danger">{{ user_currency }} {{ summary.total_expenses|floatformat:0|intcomma }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mathematical Breakdown Card -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+      <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-square-root-variable text-primary me-2"></i> Accounting Step-by-Step Breakdown</h6>
+      
+      <div class="list-group list-group-flush small">
+        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+          <span><strong>1. Total Revenue:</strong> (Selling Price &times; Qty &minus; Discounts)</span>
+          <span class="fw-bold text-dark">{{ user_currency }} {{ summary.total_revenue|floatformat:2|intcomma }}</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+          <span><strong>2. Cost of Goods Sold (COGS):</strong> (Purchase Cost &times; Qty)</span>
+          <span class="fw-bold text-danger">&minus; {{ user_currency }} {{ summary.cogs|floatformat:2|intcomma }}</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 bg-light px-2 rounded-2">
+          <span><strong>3. Gross Profit:</strong> (Revenue &minus; COGS)</span>
+          <span class="fw-bold text-success">{{ user_currency }} {{ summary.gross_profit|floatformat:2|intcomma }}</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+          <span><strong>4. Operating Expenses:</strong> (Rent, salaries, power, overheads)</span>
+          <span class="fw-bold text-danger">&minus; {{ user_currency }} {{ summary.total_expenses|floatformat:2|intcomma }}</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-top border-2 {% if summary.is_profit %}text-profit{% else %}text-loss{% endif %}">
+          <span class="fs-6 fw-bold">5. Final Net Business Profit:</span>
+          <span class="fs-5 fw-bold">{{ user_currency }} {{ summary.net_profit|floatformat:2|intcomma }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     EXPENSE BREAKDOWN & VISUAL COMPARISON
+     ========================================== -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+      <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-column text-primary me-2"></i> Monthly Profit & Loss Ledger Graph</h6>
+      <div style="height: 280px;">
+        <canvas id="plMonthlyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+      <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list-check text-primary me-2"></i> Category Overheads Ratio</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-borderless small mb-0">
+          <thead>
+            <tr class="text-muted border-bottom">
+              <th>Category</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat in summary.expense_categories %}
+              <tr>
+                <td><i class="fa-solid fa-circle text-danger me-1" style="font-size: 0.5rem;"></i> {{ cat.category }}</td>
+                <td class="text-end fw-semibold text-danger">{{ user_currency }} {{ cat.total|floatformat:2|intcomma }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="text-center py-3 text-muted">No operating expenses recorded.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const chartsData = {{ charts_json|safe }};
+  const ctx = document.getElementById('plMonthlyChart').getContext('2d');
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: chartsData.monthly.labels,
+      datasets: [
+        {
+          label: 'Revenue',
+          data: chartsData.monthly.revenues,
+          backgroundColor: '#3B82F6',
+          borderRadius: 4
+        },
+        {
+          label: 'Total Expenses',
+          data: chartsData.monthly.expenses,
+          backgroundColor: '#EF4444',
+          borderRadius: 4
+        },
+        {
+          label: 'Net Profit',
+          data: chartsData.monthly.net_profits,
+          backgroundColor: chartsData.monthly.net_profits.map(v => v >= 0 ? '#10B981' : '#F87171'),
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
+      },
+      scales: {
+        y: { grid: { color: '#F1F5F9' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+</script>
+{% endblock %}

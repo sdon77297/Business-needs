@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Edit Product - {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="fw-bold text-dark mb-1">Edit Product Details</h4>
+        <p class="text-muted small mb-0">Update pricing and inventory for <strong>{{ product.name }}</strong></p>
+      </div>
+      <a href="{% url 'business:products' %}" class="btn btn-sm btn-light border"><i class="fa-solid fa-arrow-left me-1"></i> Back to Products</a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Product Name *</label>
+            {{ form.name }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">SKU / Product Code *</label>
+            {{ form.product_id }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Category Name</label>
+            {{ form.category_name }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Purchase Date</label>
+            {{ form.purchase_date }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Purchase Price (Cost) *</label>
+            {{ form.purchase_price }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Selling Price (Retail) *</label>
+            {{ form.selling_price }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Total Purchased Quantity</label>
+            {{ form.quantity_purchased }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold text-muted">Available Stock Units *</label>
+            {{ form.available_quantity }}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+          <a href="{% url 'business:products' %}" class="btn btn-light border px-4">Cancel</a>
+          <button type="submit" class="btn btn-emerald px-4">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Update Product
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

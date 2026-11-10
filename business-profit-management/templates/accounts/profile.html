@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Profit & Loss Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="fw-bold text-dark mb-1">Businessman Profile</h4>
+        <p class="text-muted small mb-0">Manage your personal credentials, contact info, and preferences</p>
+      </div>
+      <span class="badge bg-primary px-3 py-2 fs-6">User ID: {{ request.user.user_id }}</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+      <div class="card-header bg-navy text-white p-4" style="background: linear-gradient(135deg, #0B1B3D 0%, #1E3A8A 100%);">
+        <div class="d-flex align-items-center gap-3">
+          <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center fw-bold fs-3 shadow" style="width: 64px; height: 64px;">
+            {{ request.user.user_id|slice:":1"|upper }}
+          </div>
+          <div>
+            <h5 class="fw-bold text-white mb-0">{{ request.user.full_name|default:request.user.user_id }}</h5>
+            <small class="text-white-50">Member since {{ request.user.created_at|date:"F Y" }}</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body p-4">
+        <form method="POST" action="{% url 'accounts:profile' %}">
+          {% csrf_token %}
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Full Name</label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}
+                <div class="text-danger small mt-1">{{ form.full_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">User ID (Permanent)</label>
+              <input type="text" class="form-control bg-light" value="{{ request.user.user_id }}" disabled readonly>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Email Address</label>
+              {{ form.email }}
+              {% if form.email.errors %}
+                <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Mobile Number</label>
+              {{ form.mobile_number }}
+              {% if form.mobile_number.errors %}
+                <div class="text-danger small mt-1">{{ form.mobile_number.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Default Display Currency</label>
+              {{ form.currency }}
+              <div class="form-text small">Used for financial graphs, reports, and calculations.</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'business:dashboard' %}" class="btn btn-light border px-4">Cancel</a>
+            <button type="submit" class="btn btn-emerald px-4">
+              <i class="fa-solid fa-floppy-disk me-1"></i> Save Profile Details
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

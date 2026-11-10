@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Report Download Center - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h4 class="fw-bold text-dark mb-1">Financial Report Generation & Downloads</h4>
+  <p class="text-muted small mb-0">Generate professional, printable PDF statements, Excel spreadsheets, and CSV files for <strong>{{ business.name }}</strong></p>
+</div>
+
+<!-- Date Range Filter Box for Reports -->
+<div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+  <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-sliders text-primary me-2"></i> Report Date Parameters</h6>
+  <form id="reportFilterForm" class="row g-3 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold text-muted">From Date</label>
+      <input type="date" id="rep_start_date" class="form-control">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold text-muted">To Date</label>
+      <input type="date" id="rep_end_date" class="form-control">
+    </div>
+    <div class="col-md-4 d-flex gap-2">
+      <button type="button" class="btn btn-navy flex-grow-1" onclick="setPreset('this_month')">Current Month</button>
+      <button type="button" class="btn btn-light border" onclick="clearDates()">Clear</button>
+    </div>
+  </form>
+</div>
+
+<!-- Download Cards Grid -->
+<div class="row g-4 mb-4">
+  <!-- 1. Full PDF P&L Statement -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 d-flex flex-column">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="p-3 rounded-3 bg-danger bg-opacity-10 text-danger">
+          <i class="fa-solid fa-file-pdf fa-2x"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold text-dark mb-0">P&L Statement (PDF)</h5>
+          <span class="badge bg-light text-muted border">Formal Financial Print</span>
+        </div>
+      </div>
+      <p class="text-muted small flex-grow-1">
+        Executive, branded PDF statement containing executive financial summary, sales breakdown, operating expenses, and verified net profit figures.
+      </p>
+      <button onclick="downloadReport('pdf')" class="btn btn-danger w-100 mt-3 d-flex align-items-center justify-content-center gap-2">
+        <i class="fa-solid fa-download"></i>
+        <span>Download PDF Statement</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Excel (.XLSX) Multi-Sheet Workbook -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 d-flex flex-column">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="p-3 rounded-3 bg-success bg-opacity-10 text-success">
+          <i class="fa-solid fa-file-excel fa-2x"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold text-dark mb-0">Financial Workbook (Excel)</h5>
+          <span class="badge bg-light text-muted border">Multi-Sheet .XLSX</span>
+        </div>
+      </div>
+      <p class="text-muted small flex-grow-1">
+        Complete workbook featuring 3 dedicated sheets: Executive P&L Summary, Sales Ledger with unit economics, and Operating Expenses Ledger.
+      </p>
+      <button onclick="downloadReport('excel')" class="btn btn-success w-100 mt-3 d-flex align-items-center justify-content-center gap-2">
+        <i class="fa-solid fa-download"></i>
+        <span>Download Excel Workbook</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 3. CSV Consolidated Ledger -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 d-flex flex-column">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="p-3 rounded-3 bg-primary bg-opacity-10 text-primary">
+          <i class="fa-solid fa-file-csv fa-2x"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold text-dark mb-0">Transactions Ledger (CSV)</h5>
+          <span class="badge bg-light text-muted border">Accounting Import</span>
+        </div>
+      </div>
+      <p class="text-muted small flex-grow-1">
+        Raw, comma-separated transactions data ready for accounting software, Tally, QuickBooks, or custom data analysis.
+      </p>
+      <button onclick="downloadReport('csv')" class="btn btn-primary w-100 mt-3 d-flex align-items-center justify-content-center gap-2">
+        <i class="fa-solid fa-download"></i>
+        <span>Download CSV Dataset</span>
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function downloadReport(format) {
+    const start = document.getElementById('rep_start_date').value;
+    const end = document.getElementById('rep_end_date').value;
+    let url = `/reports/download/${format}/?`;
+    if (start) url += `start_date=${encodeURIComponent(start)}&`;
+    if (end) url += `end_date=${encodeURIComponent(end)}&`;
+    window.location.href = url;
+  }
+
+  function setPreset(type) {
+    const today = new Date();
+    if (type === 'this_month') {
+      const y = today.getFullYear();
+      const m = String(today.getMonth() + 1).padStart(2, '0');
+      document.getElementById('rep_start_date').value = `${y}-${m}-01`;
+      document.getElementById('rep_end_date').value = today.toISOString().split('T')[0];
+    }
+  }
+
+  function clearDates() {
+    document.getElementById('rep_start_date').value = '';
+    document.getElementById('rep_end_date').value = '';
+  }
+</script>
+{% endblock %}

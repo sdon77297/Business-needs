@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Transaction Ledger - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold text-dark mb-1">Unified Transaction History</h4>
+    <p class="text-muted small mb-0">Consolidated financial audit trail of all inflows and outflows for <strong>{{ business.name }}</strong></p>
+  </div>
+  <a href="{% url 'business:reports' %}" class="btn btn-navy d-flex align-items-center gap-2">
+    <i class="fa-solid fa-download"></i>
+    <span>Download Reports</span>
+  </a>
+</div>
+
+<!-- Search & Filter Card -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+  <form method="GET" action="{% url 'business:transactions' %}" class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Search reference ID, product, or description..." value="{{ search_query }}">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="ALL">-- All Transaction Types --</option>
+        <option value="SALE" {% if type_filter == 'SALE' %}selected{% endif %}>Sales (Inflows)</option>
+        <option value="EXPENSE" {% if type_filter == 'EXPENSE' %}selected{% endif %}>Expenses (Outflows)</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="date" name="date" class="form-control form-control-sm" value="{{ date_filter }}">
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-navy flex-grow-1">Filter</button>
+      {% if search_query or type_filter or date_filter %}
+        <a href="{% url 'business:transactions' %}" class="btn btn-sm btn-light border" title="Reset Filters"><i class="fa-solid fa-rotate-right"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Transactions Table -->
+<div class="custom-table-container">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Reference ID</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Transaction Details</th>
+          <th>Amount</th>
+          <th>Net Financial Impact</th>
+          <th>Payment Channel</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in transactions %}
+          <tr>
+            <td class="font-monospace fw-bold text-dark">{{ t.reference_id }}</td>
+            <td class="text-muted small">{{ t.date|date:"d M Y" }}</td>
+            <td>
+              {% if t.transaction_type == 'SALE' %}
+                <span class="badge-soft-success"><i class="fa-solid fa-arrow-down-left me-1"></i> Sale</span>
+              {% else %}
+                <span class="badge-soft-danger"><i class="fa-solid fa-arrow-up-right me-1"></i> Expense</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="fw-semibold text-dark">{{ t.title }}</div>
+            </td>
+            <td class="fw-bold text-dark">{{ user_currency }} {{ t.amount|floatformat:2|intcomma }}</td>
+            <td>
+              {% if t.transaction_type == 'SALE' %}
+                <span class="fw-bold text-success">+{{ user_currency }} {{ t.profit_or_loss|floatformat:2|intcomma }} (Profit)</span>
+              {% else %}
+                <span class="fw-bold text-danger">-{{ user_currency }} {{ t.amount|floatformat:2|intcomma }} (Cost)</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge bg-light text-muted border">{{ t.payment_method }}</span>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="fa-solid fa-receipt fa-3x mb-3 text-muted"></i>
+              <h6 class="fw-bold text-dark">No Transactions Found</h6>
+              <p class="small">Transactions are automatically created when sales and expenses are entered.</p>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}My Businesses - Profit & Loss Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold text-dark mb-1">My Business Portfolios</h4>
+    <p class="text-muted small mb-0">Manage multiple businesses, register new ventures, and switch active ledgers</p>
+  </div>
+  <button type="button" class="btn btn-emerald d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addBusinessModal">
+    <i class="fa-solid fa-plus"></i>
+    <span>Add New Business</span>
+  </button>
+</div>
+
+<!-- Business Cards Grid -->
+<div class="row g-4 mb-4">
+  {% for b in businesses %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card border-0 shadow-sm rounded-4 h-100 position-relative {% if b.id == active_business.id %}border-2 border-primary{% endif %}">
+        {% if b.id == active_business.id %}
+          <div class="position-absolute top-0 end-0 m-3">
+            <span class="badge bg-success shadow-sm"><i class="fa-solid fa-check me-1"></i> Active in Session</span>
+          </div>
+        {% endif %}
+
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="rounded-3 bg-primary bg-opacity-10 text-primary p-3">
+              <i class="fa-solid fa-briefcase fa-xl"></i>
+            </div>
+            <div>
+              <h5 class="fw-bold text-dark mb-0">{{ b.name }}</h5>
+              <span class="badge bg-light text-muted border mt-1">{{ b.business_type }}</span>
+            </div>
+          </div>
+
+          <p class="text-muted small mb-3 flex-grow-1" style="min-height: 40px;">
+            {{ b.description|default:"No business description provided." }}
+          </p>
+
+          <div class="p-3 bg-light rounded-3 small space-y-1 mb-3">
+            <div class="d-flex justify-content-between text-muted">
+              <span>Initial Capital:</span>
+              <strong class="text-dark">{{ user_currency }} {{ b.initial_investment|floatformat:2|intcomma }}</strong>
+            </div>
+            <div class="d-flex justify-content-between text-muted">
+              <span>Established:</span>
+              <strong class="text-dark">{{ b.starting_date|date:"d M Y" }}</strong>
+            </div>
+            <div class="d-flex justify-content-between text-muted">
+              <span>Contact:</span>
+              <strong class="text-dark">{{ b.contact_number }}</strong>
+            </div>
+            <div class="d-flex justify-content-between text-muted">
+              <span>Location:</span>
+              <span class="text-truncate text-end" style="max-width: 160px;">{{ b.address }}</span>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-auto">
+            {% if b.id != active_business.id %}
+              <a href="{% url 'business:switch_business' b.id %}" class="btn btn-sm btn-primary flex-grow-1">
+                <i class="fa-solid fa-repeat me-1"></i> Set Active
+              </a>
+            {% else %}
+              <a href="{% url 'business:dashboard' %}" class="btn btn-sm btn-outline-success flex-grow-1">
+                <i class="fa-solid fa-gauge me-1"></i> Open Dashboard
+              </a>
+            {% endif %}
+
+            <a href="{% url 'business:edit_business' b.id %}" class="btn btn-sm btn-light border text-muted" title="Edit Business">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </a>
+
+            <a href="{% url 'business:delete_business' b.id %}" class="btn btn-sm btn-light border text-danger" title="Delete Business">
+              <i class="fa-solid fa-trash"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12 text-center py-5">
+      <div class="p-4 bg-white rounded-4 shadow-sm max-w-md mx-auto">
+        <i class="fa-solid fa-building-circle-plus fa-3x text-muted mb-3"></i>
+        <h5 class="fw-bold text-dark">No Business Registered Yet</h5>
+        <p class="text-muted small">You need to register at least one business to track sales, expenses, and profits.</p>
+        <button type="button" class="btn btn-emerald px-4" data-bs-toggle="modal" data-bs-target="#addBusinessModal">
+          Add Your First Business
+        </button>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Add Business Modal -->
+<div class="modal fade" id="addBusinessModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-navy text-white p-3 px-4" style="background-color: #0B1B3D;">
+        <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-plus-circle me-2"></i> Register New Business</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{% url 'business:my_business' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Business Name *</label>
+              {{ form.name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Business Type *</label>
+              {{ form.business_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Initial Capital Investment ({{ user_currency }}) *</label>
+              {{ form.initial_investment }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Contact Phone Number *</label>
+              {{ form.contact_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Starting Date *</label>
+              {{ form.starting_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Business Location / Address *</label>
+              {{ form.address }}
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold text-muted">Business Description</label>
+              {{ form.description }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer p-3 bg-light">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-emerald px-4">Create Business Portfolio</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

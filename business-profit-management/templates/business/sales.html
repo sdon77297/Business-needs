@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load business_tags %}
+{% block title %}Sales Management - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold text-dark mb-1">Sales Management & Automated Profit</h4>
+    <p class="text-muted small mb-0">Record retail orders, update available stock automatically, and compute gross profits</p>
+  </div>
+  <button type="button" class="btn btn-emerald d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#recordSaleModal">
+    <i class="fa-solid fa-cart-plus"></i>
+    <span>Record New Sale</span>
+  </button>
+</div>
+
+<!-- Search & Date Filter -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+  <form method="GET" action="{% url 'business:sales' %}" class="row g-2 align-items-center">
+    <div class="col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Search by Invoice #, Product Name, or Customer..." value="{{ search_query }}">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="date" class="form-control form-control-sm" value="{{ date_filter }}">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-navy flex-grow-1">Filter Sales</button>
+      {% if search_query or date_filter %}
+        <a href="{% url 'business:sales' %}" class="btn btn-sm btn-light border" title="Reset Filters"><i class="fa-solid fa-rotate-right"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Sales Orders Table -->
+<div class="custom-table-container">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Sales Date</th>
+          <th>Product Sold</th>
+          <th>Quantity</th>
+          <th>Unit Price</th>
+          <th>Discount</th>
+          <th>Total Revenue</th>
+          <th>COGS (Cost)</th>
+          <th>Profit Generated</th>
+          <th>Customer & Mode</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sales %}
+          <tr>
+            <td>
+              <span class="font-monospace fw-bold text-primary">{{ s.invoice_no }}</span>
+            </td>
+            <td class="text-muted small">{{ s.sales_date|date:"d M Y" }}</td>
+            <td>
+              <div class="fw-bold text-dark">{{ s.product_name }}</div>
+            </td>
+            <td class="fw-semibold text-dark">{{ s.quantity_sold }}</td>
+            <td class="text-muted">{{ user_currency }} {{ s.selling_price|floatformat:2|intcomma }}</td>
+            <td class="text-muted">
+              {% if s.discount > 0 %}
+                <span class="text-danger">-{{ user_currency }} {{ s.discount|floatformat:2 }}</span>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td class="fw-bold text-dark">{{ user_currency }} {{ s.total_amount|floatformat:2|intcomma }}</td>
+            <td class="text-muted">{{ user_currency }} {{ s.cost_of_goods_sold|floatformat:2|intcomma }}</td>
+            <td>
+              {% if s.profit >= 0 %}
+                <span class="badge-soft-success fw-bold">+{{ user_currency }} {{ s.profit|floatformat:2|intcomma }}</span>
+              {% else %}
+                <span class="badge-soft-danger fw-bold">-{{ user_currency }} {{ s.profit|abs|floatformat:2|intcomma }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="small fw-semibold text-dark">{{ s.customer_name }}</div>
+              <small class="badge bg-light text-muted border">{{ s.payment_method }}</small>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'business:delete_sale' s.id %}" class="btn btn-sm btn-light border text-danger" title="Delete Sale (Restores Stock)">
+                <i class="fa-solid fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="11" class="text-center py-5 text-muted">
+              <i class="fa-solid fa-cart-arrow-down fa-3x mb-3 text-muted"></i>
+              <h6 class="fw-bold text-dark">No Sales Records Found</h6>
+              <p class="small">Enter sales transactions to automatically calculate revenues and profits.</p>
+              <button type="button" class="btn btn-emerald btn-sm px-3" data-bs-toggle="modal" data-bs-target="#recordSaleModal">
+                Record New Sale
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Record Sale Modal with Live Dynamic P&L Calculator -->
+<div class="modal fade" id="recordSaleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-navy text-white p-3 px-4" style="background-color: #0B1B3D;">
+        <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-cart-plus me-2"></i> Record Sale & Calculate Profit</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{% url 'business:sales' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          {% if form.errors %}
+          <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
+            <strong class="d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> Please correct the following errors:</strong>
+            <ul class="mb-0 ps-3">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Select Product from Stock *</label>
+              {{ form.product }}
+              {% if form.product.errors %}
+                <div class="text-danger small mt-1">{{ form.product.errors.0 }}</div>
+              {% endif %}
+              <div class="d-flex justify-content-between mt-1 small" style="font-size: 0.75rem;">
+                <span class="text-muted">Available Stock: <strong id="preview_available_stock" class="text-dark">-</strong></span>
+                <span class="text-muted">Unit Purchase Cost: <strong id="preview_unit_cost" class="text-dark">-</strong></span>
+              </div>
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold text-muted">Quantity Sold *</label>
+              {{ form.quantity_sold }}
+              {% if form.quantity_sold.errors %}
+                <div class="text-danger small mt-1">{{ form.quantity_sold.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold text-muted">Selling Price (Unit) *</label>
+              {{ form.selling_price }}
+              {% if form.selling_price.errors %}
+                <div class="text-danger small mt-1">{{ form.selling_price.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-muted">Discount Applied ({{ user_currency }})</label>
+              {{ form.discount }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-muted">Payment Method</label>
+              {{ form.payment_method }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold text-muted">Sales Date</label>
+              {{ form.sales_date }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Customer Name / Client</label>
+              {{ form.customer_name }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Notes / Receipt Remarks</label>
+              {{ form.notes }}
+            </div>
+          </div>
+
+          <!-- Dynamic Real-Time Financial Preview Box -->
+          <div class="mt-4 p-3 rounded-3 bg-light border">
+            <div class="text-uppercase fw-bold text-muted small mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+              <i class="fa-solid fa-calculator text-primary me-1"></i> Live Automated Calculation Preview
+            </div>
+            <div class="row text-center g-2">
+              <div class="col-4">
+                <small class="text-muted d-block">Expected Revenue</small>
+                <span class="fw-bold fs-6 text-dark">{{ user_currency }} <span id="preview_total_revenue">0.00</span></span>
+              </div>
+              <div class="col-4">
+                <small class="text-muted d-block">Cost of Goods (COGS)</small>
+                <span class="fw-bold fs-6 text-muted">{{ user_currency }} <span id="preview_cogs">0.00</span></span>
+              </div>
+              <div class="col-4">
+                <small class="text-muted d-block">Profit from this Sale</small>
+                <span class="fw-bold fs-6 text-success">{{ user_currency }} <span id="preview_profit">0.00</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer p-3 bg-light">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-emerald px-4">
+            <i class="fa-solid fa-check me-1"></i> Confirm Sale
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% if form.errors %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var modalEl = document.getElementById('recordSaleModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+      var modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

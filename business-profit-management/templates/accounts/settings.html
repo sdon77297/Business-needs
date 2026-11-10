@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Account Settings - Profit & Loss Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="mb-4">
+      <h4 class="fw-bold text-dark mb-1">Account & Security Settings</h4>
+      <p class="text-muted small mb-0">Update your security credentials and application preferences</p>
+    </div>
+
+    <!-- Change Password Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-white py-3 border-bottom">
+        <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-lock text-primary me-2"></i> Change Password</h6>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{% url 'accounts:settings' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="change_password">
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold text-muted">Current Password</label>
+            {{ password_form.old_password }}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">New Password</label>
+              {{ password_form.new_password }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Confirm New Password</label>
+              {{ password_form.confirm_new_password }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-navy px-4">
+              <i class="fa-solid fa-key me-1"></i> Update Password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Security Information Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-header bg-white py-3 border-bottom">
+        <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-shield-halved text-success me-2"></i> Security & Session Status</h6>
+      </div>
+      <div class="card-body p-4">
+        <ul class="list-group list-group-flush small">
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="fa-solid fa-database text-muted me-2"></i> Database Multi-Tenant Isolation</span>
+            <span class="badge bg-success">Active & Enforced</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="fa-solid fa-fingerprint text-muted me-2"></i> Password Encryption</span>
+            <span class="badge bg-primary">PBKDF2 SHA-256 Hashing</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="fa-solid fa-shield-virus text-muted me-2"></i> CSRF & SQL Injection Protection</span>
+            <span class="badge bg-success">Enabled</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="fa-solid fa-clock text-muted me-2"></i> Last Login Session</span>
+            <span class="text-muted">{{ request.user.last_login|date:"d M Y, h:i A"|default:"Current Session" }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Expense Management - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+  <div>
+    <h4 class="fw-bold text-dark mb-1">Business Expense Management</h4>
+    <p class="text-muted small mb-0">Record operating overheads, utilities, salaries, and rent for <strong>{{ business.name }}</strong></p>
+  </div>
+  <button type="button" class="btn btn-outline-danger d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#recordExpenseModal">
+    <i class="fa-solid fa-receipt"></i>
+    <span>Record New Expense</span>
+  </button>
+</div>
+
+<!-- Search & Category Filter Bar -->
+<div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+  <form method="GET" action="{% url 'business:expenses' %}" class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <input type="text" name="search" class="form-control border-start-0" placeholder="Search by Expense Name or Payee..." value="{{ search_query }}">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">-- All Expense Categories --</option>
+        {% for cat_val, cat_label in categories %}
+          <option value="{{ cat_val }}" {% if category_filter == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-navy flex-grow-1">Filter Expenses</button>
+      {% if search_query or category_filter %}
+        <a href="{% url 'business:expenses' %}" class="btn btn-sm btn-light border" title="Reset Filters"><i class="fa-solid fa-rotate-right"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Expense Table -->
+<div class="custom-table-container">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Expense Title</th>
+          <th>Category</th>
+          <th>Date Incurred</th>
+          <th>Amount Paid</th>
+          <th>Payment Mode</th>
+          <th>Description / Remarks</th>
+          <th class="text-end">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in expenses %}
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">{{ e.name }}</div>
+              <small class="text-muted font-monospace" style="font-size: 0.72rem;">EXP-{{ e.id|stringformat:"06d" }}</small>
+            </td>
+            <td>
+              <span class="badge bg-soft-info text-primary border">{{ e.category }}</span>
+            </td>
+            <td class="text-muted small">{{ e.expense_date|date:"d M Y" }}</td>
+            <td class="fw-bold text-danger">{{ user_currency }} {{ e.amount|floatformat:2|intcomma }}</td>
+            <td>
+              <span class="badge bg-light text-muted border">{{ e.payment_method }}</span>
+            </td>
+            <td class="text-muted small">
+              {{ e.description|default:"-" }}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'business:delete_expense' e.id %}" class="btn btn-sm btn-light border text-danger" title="Delete Expense">
+                <i class="fa-solid fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="fa-solid fa-file-invoice fa-3x mb-3 text-muted"></i>
+              <h6 class="fw-bold text-dark">No Expenses Logged</h6>
+              <p class="small">Track rent, staff salaries, electricity, and marketing expenses to maintain accurate net profit calculations.</p>
+              <button type="button" class="btn btn-outline-danger btn-sm px-3" data-bs-toggle="modal" data-bs-target="#recordExpenseModal">
+                Record New Expense
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Record Expense Modal -->
+<div class="modal fade" id="recordExpenseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-navy text-white p-3 px-4" style="background-color: #0B1B3D;">
+        <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-receipt me-2"></i> Record Operating Business Expense</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{% url 'business:expenses' %}">
+        {% csrf_token %}
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Expense Name / Title *</label>
+              {{ form.name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Expense Category *</label>
+              {{ form.category }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Expense Amount ({{ user_currency }}) *</label>
+              {{ form.amount }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Payment Method</label>
+              {{ form.payment_method }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold text-muted">Date Incurred</label>
+              {{ form.expense_date }}
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold text-muted">Description / Voucher Remark</label>
+              {{ form.description }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer p-3 bg-light">
+          <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger px-4">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
