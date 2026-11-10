@@ -1,4 +1,5 @@
 import express, { Application, Request, Response } from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -70,6 +71,15 @@ app.all('/api/*', (req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: `Endpoint ${req.originalUrl} not found on this server.`,
+  });
+});
+
+// Serve the production Vite build from the same origin as the API.
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDist));
+app.get('*', (_req: Request, res: Response, next) => {
+  res.sendFile(path.join(frontendDist, 'index.html'), (error) => {
+    if (error) next(error);
   });
 });
 
