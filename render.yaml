@@ -20,11 +20,6 @@ services:
         value: 7d
       - key: COOKIE_NAME
         value: mfef_session_token
-      - key: CLIENT_URL
-        fromService:
-          type: web
-          name: mfef-wealth-portal
-          property: host
 
   # Frontend Portal (React 18 + Vite + Tailwind CSS)
   - type: web
@@ -37,9 +32,3 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-    envVars:
-      - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: mfef-wealth-api
-          property: host

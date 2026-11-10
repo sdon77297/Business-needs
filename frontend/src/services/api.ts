@@ -10,6 +10,8 @@ if (customBase) {
     ? cleanBase
     : `https://${cleanBase}`;
   baseURL = `${withProtocol}/api/v1`;
+} else if (import.meta.env.PROD) {
+  baseURL = 'https://mfef-wealth-api.onrender.com/api/v1';
 }
 
 export const api = axios.create({
