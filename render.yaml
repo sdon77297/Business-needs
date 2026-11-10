@@ -43,4 +43,4 @@ services:
         fromService:
           type: web
           name: mfef-wealth-api
-          property: url
+          property: host

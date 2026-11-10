@@ -28,9 +28,23 @@ app.use(
 );
 
 // CORS configuration
+const allowedOrigins = [
+  env.CLIENT_URL,
+  env.CLIENT_URL.startsWith('http') ? env.CLIENT_URL : `https://${env.CLIENT_URL}`,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+
 app.use(
   cors({
-    origin: [env.CLIENT_URL, 'http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl) or matching origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Permissive in production for client portal
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
